@@ -1,7 +1,8 @@
-from ast import parse
 import json
+from uuid import UUID
 from dbtools import add_packet, parse_time, PacketInfo
 import multiprocessing
+import csv
 
 # Constants
 
@@ -15,11 +16,29 @@ PDU_CONNECT_REQ = "0x05"
 PDU_ADV_SCAN_IND = "0x06"
 
 # AD TYPES
+AD_TYPE_SERVICE_CLASS = "0x03"
 AD_TYPE_DEVICE_NAME = "0x09"
 AD_TYPE_SERVICE_DATA = "0x16"
 AD_TYPE_APPEARANCE = "0x19"
 AD_TYPE_POWER_LEVEL = "0x0a"
 AD_TYPE_MANUFACTURER_SPECIFIC_DATA = "0xff"
+
+# 16-BIT UUIDS
+with open('uuid.csv', newline='') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    next(spamreader)
+    UUID_TO_NAME = {entry[1].lower(): entry[2] for entry in spamreader}
+
+# APPEARANCES
+with open('appearance.csv', newline='') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    next(spamreader)
+    APPEARANCES = {}
+    for i, entry in enumerate(spamreader):
+        if entry[2] == 'Outdoor Sports Activity':
+            APPEARANCES[81] = entry[2]
+        else:
+            APPEARANCES[i] = entry[2]
 
 
 def load_raw(filename):
@@ -39,8 +58,8 @@ def parse_entry(entry):
 
     # Initialize default values
     pdu = timestamp = epoch = src_addr = dst_addr = \
-        rssi = device_name = service_data = appearance = \
-        power = manufacturer = None
+        rssi = device_name = service_class = service_data = \
+        appearance = power = manufacturer = None
 
     # Obtain specific layers
     frame = layers['frame']
@@ -96,17 +115,28 @@ def parse_entry(entry):
             if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_DEVICE_NAME:
                 device_name_id = ad["btcommon.eir_ad.entry.device_name"]
                 device_name = None
+            if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_SERVICE_CLASS:
+                service_class_id = ad["btcommon.eir_ad.entry.uuid_16"]
+                if service_class_id in UUID_TO_NAME:
+                    service_class = UUID_TO_NAME[service_class_id]
             if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_SERVICE_DATA:
-                service_data = ad["btcommon.eir_ad.entry.uuid_16"]
+                service_data_id = ad["btcommon.eir_ad.entry.uuid_16"]
+                if service_data_id in UUID_TO_NAME:
+                    service_data = UUID_TO_NAME[service_data_id]
             if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_APPEARANCE:
-                appearance = ad["btcommon.eir_ad.entry.appearance"]
+                appearance_id = ad["btcommon.eir_ad.entry.appearance"]
+                appearance_index = int(appearance_id, 16)//0x40
+                if appearance_index in APPEARANCES:
+                    appearance = APPEARANCES[appearance_index]
             if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_POWER_LEVEL:
                 power = ad["btcommon.eir_ad.entry.power_level"]
             if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_MANUFACTURER_SPECIFIC_DATA:
-                manufacturer = ad["btcommon.eir_ad.entry.company_id"]
+                manufacturer_id = ad["btcommon.eir_ad.entry.company_id"]
+                if manufacturer_id in UUID_TO_NAME:
+                    manufacturer = UUID_TO_NAME[manufacturer_id]
 
     # print(json.dumps(btle, indent=4, sort_keys=True))
-    return PacketInfo(pdu, timestamp, epoch, src_addr, dst_addr, rssi, device_name, service_data, appearance, power, manufacturer)
+    return PacketInfo(pdu, timestamp, epoch, src_addr, dst_addr, rssi, device_name, service_class, service_data, appearance, power, manufacturer)
 
 
 def parse_and_add_entry(entry):
@@ -116,7 +146,7 @@ def parse_and_add_entry(entry):
 
 
 if __name__ == "__main__":
-    data = load_raw('raw_parsed.json')
+    data = load_raw('raw-2_parsed.json')
     pool = multiprocessing.Pool()
     pool.map(parse_and_add_entry, data)
     # pool.map(parse_entry, data)

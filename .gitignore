@@ -1,6 +1,8 @@
 .vscode
 raw.json
 raw_parsed.json
+raw-2.json
+raw-2_parsed.json
 test.json
 test_parsed.json
 .DS_Store
