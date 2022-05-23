@@ -1,11 +1,8 @@
 import csv
-with open('appearance.csv', newline='') as csvfile:
+# APPEARANCE_SUBCATEGORIES
+with open('appearance_subcategories.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
-    APPEARANCES = {}
-    for i, entry in enumerate(spamreader):
-        if entry[2] == 'Outdoor Sports Activity':
-            APPEARANCES[81] = entry[2]
-        else:
-            APPEARANCES[i] = entry[2]
+    next(spamreader)
+    APPEARANCE_SUBCATEGORIES = {entry[0]: entry[1] for entry in spamreader}
 
-print(APPEARANCES)
+print(APPEARANCE_SUBCATEGORIES)

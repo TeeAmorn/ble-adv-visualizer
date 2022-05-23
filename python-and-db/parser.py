@@ -29,16 +29,22 @@ with open('uuid.csv', newline='') as csvfile:
     next(spamreader)
     UUID_TO_NAME = {entry[1].lower(): entry[2] for entry in spamreader}
 
-# APPEARANCES
-with open('appearance.csv', newline='') as csvfile:
+# APPEARANCE_CATEGORIES
+with open('appearance_categories.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
     next(spamreader)
-    APPEARANCES = {}
+    APPEARANCE_CATEGORIES = {}
     for i, entry in enumerate(spamreader):
         if entry[2] == 'Outdoor Sports Activity':
-            APPEARANCES[81] = entry[2]
+            APPEARANCE_CATEGORIES[81] = entry[2]
         else:
-            APPEARANCES[i] = entry[2]
+            APPEARANCE_CATEGORIES[i] = entry[2]
+
+# APPEARANCE_SUBCATEGORIES
+with open('appearance_subcategories.csv', newline='') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    next(spamreader)
+    APPEARANCE_SUBCATEGORIES = {entry[0]: entry[1] for entry in spamreader}
 
 
 def load_raw(filename):
@@ -59,7 +65,8 @@ def parse_entry(entry):
     # Initialize default values
     pdu = timestamp = epoch = src_addr = dst_addr = \
         rssi = device_name = service_class = service_data = \
-        appearance = power = manufacturer = None
+        appearance_category = appearance_subcategory = power = \
+        manufacturer = None
 
     # Obtain specific layers
     frame = layers['frame']
@@ -125,9 +132,12 @@ def parse_entry(entry):
                     service_data = UUID_TO_NAME[service_data_id]
             if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_APPEARANCE:
                 appearance_id = ad["btcommon.eir_ad.entry.appearance"]
-                appearance_index = int(appearance_id, 16)//0x40
-                if appearance_index in APPEARANCES:
-                    appearance = APPEARANCES[appearance_index]
+                appearance_subcategory_id = int(appearance_id, 16)
+                appearance_category_id = appearance_subcategory_id//0x40
+                if appearance_subcategory_id in APPEARANCE_SUBCATEGORIES:
+                    appearance_subcategory = APPEARANCE_SUBCATEGORIES[appearance_subcategory_id]
+                if appearance_category_id in APPEARANCE_CATEGORIES:
+                    appearance_category = APPEARANCE_CATEGORIES[appearance_category_id]
             if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_POWER_LEVEL:
                 power = ad["btcommon.eir_ad.entry.power_level"]
             if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_MANUFACTURER_SPECIFIC_DATA:
@@ -136,7 +146,7 @@ def parse_entry(entry):
                     manufacturer = UUID_TO_NAME[manufacturer_id]
 
     # print(json.dumps(btle, indent=4, sort_keys=True))
-    return PacketInfo(pdu, timestamp, epoch, src_addr, dst_addr, rssi, device_name, service_class, service_data, appearance, power, manufacturer)
+    return PacketInfo(pdu, timestamp, epoch, src_addr, dst_addr, rssi, device_name, service_class, service_data, appearance_category, appearance_subcategory, power, manufacturer)
 
 
 def parse_and_add_entry(entry):

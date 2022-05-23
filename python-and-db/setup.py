@@ -6,8 +6,8 @@ DB_NAME = 'demo'
 
 TABLES = {}
 
-TABLES['one'] = (
-    "CREATE TABLE `one` ("
+TABLES['two'] = (
+    "CREATE TABLE `two` ("
     "`id` int(11) NOT NULL AUTO_INCREMENT,"
     "`type` varchar(20) NOT NULL,"
     "`timestamp` datetime NOT NULL,"
@@ -15,7 +15,8 @@ TABLES['one'] = (
     "`src_addr` varchar(17) NOT NULL,"
     "`dst_addr` varchar(17),"
     "`rssi` int(4) NOT NULL,"
-    "`appearance` varchar(40),"
+    "`appearance_category` varchar(100),"
+    "`appearance_subcategory` varchar(100),"
     "`service_class` varchar(100),"
     "`service_data` varchar(100),"
     "`device_name` varchar(40),"
