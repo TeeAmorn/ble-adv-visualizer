@@ -38,7 +38,9 @@ def parse_entry(entry):
         return None
 
     # Initialize default values
-    pdu = timestamp = epoch = src_addr = dst_addr = rssi = device_name = service_data = appearance = power = manufacturer = None
+    pdu = timestamp = epoch = src_addr = dst_addr = \
+        rssi = device_name = service_data = appearance = \
+        power = manufacturer = None
 
     # Obtain specific layers
     frame = layers['frame']
