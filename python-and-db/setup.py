@@ -15,6 +15,11 @@ TABLES['one'] = (
     "`src_addr` varchar(17) NOT NULL,"
     "`dst_addr` varchar(17),"
     "`rssi` int(4) NOT NULL,"
+    "`appearance` varchar(20),"
+    "`service_data` varchar(20),"
+    "`device_name` varchar(40),"
+    "`power_level` int(3),"
+    "`manufacturer_specific_data` varchar(20),"
     "PRIMARY KEY (`id`)"
     ") ENGINE=InnoDB"
 )

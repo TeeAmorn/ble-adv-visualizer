@@ -1,8 +1,11 @@
+from ast import parse
 import json
-from dbtools import add_packet, parse_time
+from dbtools import add_packet, parse_time, PacketInfo
 import multiprocessing
 
 # Constants
+
+# PDU
 PDU_ADV_IND = "0x00"
 PDU_ADV_DIRECT_IND = "0x01"
 PDU_ADV_NONCONN_IND = "0x02"
@@ -10,6 +13,13 @@ PDU_SCAN_REQ = "0x03"
 PDU_SCAN_RSP = "0x04"
 PDU_CONNECT_REQ = "0x05"
 PDU_ADV_SCAN_IND = "0x06"
+
+# AD TYPES
+AD_TYPE_DEVICE_NAME = "0x09"
+AD_TYPE_SERVICE_DATA = "0x16"
+AD_TYPE_APPEARANCE = "0x19"
+AD_TYPE_POWER_LEVEL = "0x0a"
+AD_TYPE_MANUFACTURER_SPECIFIC_DATA = "0xff"
 
 
 def load_raw(filename):
@@ -26,6 +36,9 @@ def parse_entry(entry):
     # Check if packet is malformed
     if "_ws.malformed" in layers:
         return None
+
+    # Initialize default values
+    pdu = timestamp = epoch = src_addr = dst_addr = rssi = device_name = service_data = appearance = power = manufacturer = None
 
     # Obtain specific layers
     frame = layers['frame']
@@ -72,18 +85,38 @@ def parse_entry(entry):
     else:
         return
 
-    # Return arguments to add_packet as a tuple
-    return (pdu, timestamp, epoch, src_addr, dst_addr, rssi)
+    if 'btcommon.eir_ad.advertising_data' in btle:
+        advertising_data = btle['btcommon.eir_ad.advertising_data']
+        for i in range(10):
+            if str(i) not in advertising_data:
+                break
+            ad = advertising_data[str(i)]
+            if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_DEVICE_NAME:
+                device_name_id = ad["btcommon.eir_ad.entry.device_name"]
+                device_name = None
+            if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_SERVICE_DATA:
+                service_data = ad["btcommon.eir_ad.entry.uuid_16"]
+            if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_APPEARANCE:
+                appearance = ad["btcommon.eir_ad.entry.appearance"]
+            if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_POWER_LEVEL:
+                power = ad["btcommon.eir_ad.entry.power_level"]
+            if ad["btcommon.eir_ad.entry.type"] == AD_TYPE_MANUFACTURER_SPECIFIC_DATA:
+                manufacturer = ad["btcommon.eir_ad.entry.company_id"]
+
+    # print(json.dumps(btle, indent=4, sort_keys=True))
+    return PacketInfo(pdu, timestamp, epoch, src_addr, dst_addr, rssi, device_name, service_data, appearance, power, manufacturer)
 
 
 def parse_and_add_entry(entry):
-    parsed = parse_entry(entry)
-    if parsed is not None:
-        add_packet(*parsed)
+    packet_info = parse_entry(entry)
+    if packet_info is not None:
+        add_packet(packet_info)
 
 
 if __name__ == "__main__":
-    data = load_raw('raw.json')
-    # pool = multiprocessing.Pool()
-    # pool.map(parse_and_add_entry, data)
+    data = load_raw('raw_parsed.json')
+    pool = multiprocessing.Pool()
+    pool.map(parse_and_add_entry, data)
+    # pool.map(parse_entry, data)
+    # print(parse_entry(data[0]))
     print('DONE')
