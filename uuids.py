@@ -1,7 +1,7 @@
 import csv
 import re
 
-def load_csv_to_dict(filename):
+def load_bad_csv_to_dict(filename):
     with open(filename) as csvfile:
         # cases:
         # 1. row contains all three items -> uuid + name will be in same row
@@ -75,7 +75,6 @@ def load_csv_to_dict(filename):
     all_rows_dicts.extend(one_page_dicts)
     result = dict()
     for row in all_rows_dicts:
-        print(row)
         result[row['uuid']] = {
             'allocation_type': row['allocation_type'],
             'name': row['name']
@@ -83,12 +82,25 @@ def load_csv_to_dict(filename):
 
     return result
 
-def write_dict_to_csv(data_dict):
+def load_good_csv_to_dict(filename):
+    result = dict()
+    with open(filename) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            result[row['uuid']] = {
+                'allocation_type': row['allocation_type'],
+                'name': row['name']
+            }
+
+    return result
+
+
+def write_dict_to_csv(filename, data_dict):
     '''
     Takes the output from `load_csv_to_dict` and writes it to
     a csv with the headers `['allocation_type', 'uuid', 'name']`
     '''
-    with open('reformatted_uuids.csv', 'w', newline='') as csvfile:
+    with open(filename, 'w', newline='') as csvfile:
         fieldnames = ['allocation_type', 'uuid', 'name']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -102,6 +114,6 @@ def write_dict_to_csv(data_dict):
 
 
 if __name__ == '__main__':
-    loaded_data_dict = load_csv_to_dict('uuid_data_all.csv')
-    write_dict_to_csv(loaded_data_dict)
-    print(loaded_data_dict)
+    loaded_data_dict = load_bad_csv_to_dict('uuid_data_all.csv')
+    write_dict_to_csv('reformatted_uuids.csv', loaded_data_dict)
+    print(load_good_csv_to_dict('reformatted_uuids.csv'))
