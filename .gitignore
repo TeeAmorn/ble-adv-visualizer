@@ -169,7 +169,7 @@ cython_debug/
 #.idea/
 
 
-### C# dotnet 
+### C# dotnet
 *.swp
 *.*~
 project.lock.json
