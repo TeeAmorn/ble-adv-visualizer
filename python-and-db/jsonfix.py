@@ -21,4 +21,4 @@ def parse(readfile, writefile):
                 wf.write(line)
 
 
-parse('raw.json', 'raw_parsed.json')
+parse('raw/keyboard_pairing.json', 'fixed/keyboard_pairing.json')

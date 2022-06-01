@@ -1,8 +1,8 @@
 from database import cursor
 import csv
 
-def get_packets():
-    query = ("SELECT * FROM one ORDER BY epoch")
+def get_packets(tablename):
+    query = ("SELECT * FROM " + tablename + " ORDER BY epoch")
     cursor.execute(query)
     rows = cursor.fetchall()
     result = []
@@ -17,5 +17,7 @@ def convert_to_csv(filename, data):
         write = csv.writer(f)
         write.writerows(data)
 
-data = get_packets()
-convert_to_csv('one.csv', data)
+tablename = 'six'
+filename = 'keyboard_pairing'
+data = get_packets(tablename)
+convert_to_csv('csv/' + filename + '.csv', data)

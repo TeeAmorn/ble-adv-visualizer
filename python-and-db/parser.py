@@ -1,5 +1,4 @@
 import json
-from uuid import UUID
 from dbtools import add_packet, parse_time, PacketInfo
 import multiprocessing
 import csv
@@ -12,7 +11,7 @@ PDU_ADV_DIRECT_IND = "0x01"
 PDU_ADV_NONCONN_IND = "0x02"
 PDU_SCAN_REQ = "0x03"
 PDU_SCAN_RSP = "0x04"
-PDU_CONNECT_REQ = "0x05"
+PDU_CONNECT_IND = "0x05"
 PDU_ADV_SCAN_IND = "0x06"
 
 # AD TYPES
@@ -75,7 +74,7 @@ def parse_entry(entry):
 
     # Packet Info
     timestamp = parse_time(frame['frame.time'])
-    epoch = frame['frame.time_relative']
+    epoch = str(float(frame['frame.time_relative']) - 4385)
     channel = nordic_ble['nordic_ble.channel']
     rssi = nordic_ble['nordic_ble.rssi']
 
@@ -95,6 +94,10 @@ def parse_entry(entry):
         pdu = 'SCAN_RSP'
         src_addr = btle['btle.advertising_address']
         dst_addr = None
+    elif pdu_type_hex == PDU_CONNECT_IND:
+        pdu = 'CONNECT_IND'
+        src_addr = btle['btle.initiator_address']
+        dst_addr = btle['btle.advertising_address']
     # Ignore these for now
     elif pdu_type_hex == PDU_ADV_DIRECT_IND:
         pdu = 'ADV_DIRECT_IND'
@@ -102,10 +105,6 @@ def parse_entry(entry):
         return
     elif pdu_type_hex == PDU_ADV_NONCONN_IND:
         pdu = 'ADV_NONCONN_IND'
-        return
-    elif pdu_type_hex == PDU_CONNECT_REQ:
-        pdu = 'CONNECT_REQ'
-        initiator_address = btle['btle.initiator_address']
         return
     elif pdu_type_hex == PDU_ADV_SCAN_IND:
         pdu = 'ADV_SCAN_IND'
@@ -152,11 +151,11 @@ def parse_entry(entry):
 def parse_and_add_entry(entry):
     packet_info = parse_entry(entry)
     if packet_info is not None:
-        add_packet(packet_info)
+        add_packet(packet_info, 'six')
 
 
 if __name__ == "__main__":
-    data = load_raw('raw-2_parsed.json')
+    data = load_raw('fixed/keyboard_pairing.json')
     pool = multiprocessing.Pool()
     pool.map(parse_and_add_entry, data)
     # pool.map(parse_entry, data)

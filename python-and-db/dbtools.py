@@ -6,8 +6,8 @@ PacketInfo = namedtuple(
     "PacketInfo", "pdu timestamp epoch src_addr dst_addr rssi device_name service_class service_data appearance_category appearance_subcategory power manufacturer")
 
 
-def add_packet(info):
-    query = "INSERT INTO two(type, timestamp, epoch, src_addr, dst_addr, rssi, device_name, service_class, service_data, appearance_category, appearance_subcategory, power_level, manufacturer_specific_data) VALUES ("
+def add_packet(info, tablename):
+    query = "INSERT INTO " + tablename + "(type, timestamp, epoch, src_addr, dst_addr, rssi, device_name, service_class, service_data, appearance_category, appearance_subcategory, power_level, manufacturer_specific_data) VALUES ("
     query += 'NULL, ' if info.pdu is None else "'" + info.pdu + "', "
     query += 'NULL, ' if info.timestamp is None else "'" + info.timestamp + "', "
     query += 'NULL, ' if info.epoch is None else "'" + info.epoch + "', "
